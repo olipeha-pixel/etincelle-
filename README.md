@@ -2,6 +2,8 @@
 
 Application de rencontres et d'amitiés pensée pour les personnes **asexuelles, peu sexuelles et sur le spectre ace** (gris-A, démi, ace-flux, questioning…).
 
+> 🌐 **En ligne : https://etincelle-il3k.onrender.com** — hébergé sur Render, données persistantes (SQLite sur disque attaché).
+
 > 🧭 Philosophie : la connexion d'abord, sans pression. Les profils affichent l'identité ace, les intentions de relation (romantique sans sexe, queerplatonique, amitié…) et les personnes aro peuvent chercher uniquement des amitiés.
 
 ## 🚀 Lancer l'application
