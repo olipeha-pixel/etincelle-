@@ -245,6 +245,18 @@ async function api(req, res, url) {
     return send(200, { user: publicUser(me) });
   }
 
+  /* --- Changement de mot de passe --- */
+  if (p === '/api/password' && req.method === 'POST') {
+    const { current, next } = body;
+    if (me.pass !== hashPass(String(current || ''), me.salt))
+      return send(401, { error: 'Mot de passe actuel incorrect' });
+    if (!next || String(next).length < 6)
+      return send(400, { error: 'Nouveau mot de passe : 6 caractères minimum' });
+    const salt = crypto.randomBytes(8).toString('hex');
+    db.prepare('UPDATE users SET pass = ?, salt = ? WHERE id = ?').run(hashPass(String(next), salt), salt, me.id);
+    return send(200, { ok: true });
+  }
+
   /* --- Photos (galerie, 6 max) --- */
   function photoBroadcast() {
     for (const cid of sseClients.keys()) if (cid !== me.id) sseSend(cid, 'profiles', {});

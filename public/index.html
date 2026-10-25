@@ -316,6 +316,13 @@
         <div class="saveMsg" id="saveMsg"></div>
       </div>
       <div class="profileCard">
+        <label class="lbl">🔑 Changer mon mot de passe</label>
+        <input class="field" id="pwCurrent" type="password" placeholder="Mot de passe actuel" autocomplete="current-password">
+        <input class="field" id="pwNew" type="password" placeholder="Nouveau mot de passe (6 caractères min)" autocomplete="new-password">
+        <button class="bigBtn btnGhost" onclick="changePassword()">Mettre à jour</button>
+        <div class="saveMsg" id="pwMsg"></div>
+      </div>
+      <div class="profileCard">
         <label class="lbl">🚫 Personnes bloquées</label>
         <div id="blockedList" style="font-size:13px;color:var(--muted)">Aucune</div>
       </div>
@@ -885,6 +892,14 @@ async function blockCurrent(){
     currentMatchId = null;
     await loadMatches(); show('matches');
   }catch(e){ toast(e.message); }
+}
+async function changePassword(){
+  try{
+    await api('/api/password', {method:'POST', body:{current: $('#pwCurrent').value, next: $('#pwNew').value}});
+    $('#pwMsg').textContent = '✓ Mot de passe modifié !';
+    $('#pwCurrent').value = ''; $('#pwNew').value = '';
+    setTimeout(() => $('#pwMsg').textContent = '', 3000);
+  }catch(e){ $('#pwMsg').textContent = e.message; }
 }
 async function loadBlockedList(){
   try{
