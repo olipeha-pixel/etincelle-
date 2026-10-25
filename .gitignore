@@ -1,0 +1,9 @@
+# Données & secrets — ne jamais versionner
+etincelle.db
+etincelle.db-wal
+etincelle.db-shm
+data.json
+data.json.imported
+*.log
+test_out.txt
+public/uploads/

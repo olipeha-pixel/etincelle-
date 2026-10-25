@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Étincelle 💜 — rencontres asexuelles & peu sexuelles</title>
+<style>
+  :root{
+    --bg:#0f0e17; --card:#1a1929; --card2:#232238; --violet:#a78bfa; --violet2:#7c5cff;
+    --lav:#c4b5fd; --text:#f4f2ff; --muted:#a9a3c9; --green:#2dd4a7; --radius:22px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    font-family:'Segoe UI',system-ui,sans-serif;
+    background:radial-gradient(1200px 800px at 20% -10%, #2a1f4d 0%, var(--bg) 55%);
+    color:var(--text); height:100vh; overflow:hidden; display:flex; justify-content:center;
+  }
+  #app{width:100%;max-width:430px;height:100%;display:flex;flex-direction:column;position:relative}
+
+  /* ---------- Auth ---------- */
+  #authView{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:28px;z-index:100;background:var(--bg)}
+  #authView .logo{font-size:38px;font-weight:800;text-align:center;margin-bottom:6px;
+    background:linear-gradient(90deg,var(--lav),var(--violet2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  #authView .tag{text-align:center;color:var(--muted);font-size:13.5px;margin-bottom:26px;line-height:1.6}
+  .field{width:100%;background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:14px;
+    padding:14px 16px;color:var(--text);font-size:15px;outline:none;margin-bottom:10px}
+  .field:focus{border-color:var(--violet)}
+  .bigBtn{width:100%;padding:15px;border-radius:14px;border:none;font-size:16px;font-weight:700;cursor:pointer;color:#fff}
+  .btnPrimary{background:linear-gradient(135deg,var(--violet),var(--violet2))}
+  .btnGhost{background:var(--card2);color:var(--text)}
+  .authTabs{display:flex;gap:8px;margin-bottom:18px}
+  .authTabs button{flex:1;padding:11px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:none;color:var(--muted);font-size:14px;cursor:pointer}
+  .authTabs button.active{background:var(--card2);color:var(--text);border-color:var(--violet)}
+  .linkLike{text-align:center;color:var(--violet);font-size:13px;margin-top:14px;cursor:pointer}
+  #authError{color:#ff7a9c;font-size:13px;text-align:center;min-height:18px;margin-top:8px}
+  .demoHint{margin-top:18px;text-align:center;color:var(--muted);font-size:12px;line-height:1.6}
+  .aceFlag{display:flex;height:8px;border-radius:99px;overflow:hidden;margin:0 auto 20px;max-width:140px}
+  .aceFlag div{flex:1}
+
+  /* ---------- Vues ---------- */
+  .view{position:absolute;inset:0;display:none;flex-direction:column;padding:0;padding-bottom:76px;overflow-y:auto}
+  .view.active{display:flex}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 8px}
+  header .logo{font-weight:800;font-size:20px;background:linear-gradient(90deg,var(--lav),var(--violet2));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* ---------- Carte de swipe ---------- */
+  #filterBar{display:flex;gap:8px;padding:6px 16px;overflow-x:auto}
+  .chip{padding:7px 14px;border-radius:99px;background:var(--card2);color:var(--muted);font-size:12.5px;
+    border:none;cursor:pointer;white-space:nowrap}
+  .chip.active{background:linear-gradient(135deg,var(--violet),var(--violet2));color:#fff}
+  #deckWrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative;min-height:0;padding:10px 16px}
+  .card{position:absolute;width:min(88vw,360px);height:min(62vh,520px);border-radius:var(--radius);
+    overflow:hidden;background:var(--card2);box-shadow:0 18px 50px rgba(0,0,0,.55);will-change:transform;touch-action:none}
+  .card .photo{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:100px}
+  .card .photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .miniAv img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+  .bigAv img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+  #filterPanel{display:none;padding:12px 16px;background:var(--card);margin:6px 14px 0;border-radius:16px}
+  #filterPanel.open{display:block}
+  .fRow{display:flex;align-items:center;gap:10px;margin:9px 0;font-size:13px;color:var(--muted)}
+  .fRow input[type=number]{width:64px;background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:7px;color:var(--text);text-align:center;outline:none}
+  .fRow input[type=range]{flex:1;accent-color:var(--violet)}
+  .fBtn{padding:8px 14px;border-radius:10px;border:1px solid var(--violet);background:none;color:var(--lav);font-size:12.5px;cursor:pointer}
+  .dots{position:absolute;top:12px;left:12px;display:flex;gap:5px;z-index:2}
+  .dots div{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35)}
+  .dots div.on{background:#fff}
+  .photoGrid{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+  .photoGrid .thumb{position:relative;width:64px;height:64px;border-radius:12px;overflow:hidden;background:var(--card2)}
+  .photoGrid .thumb img{width:100%;height:100%;object-fit:cover}
+  .photoGrid .thumb .x,.photoGrid .thumb .star{position:absolute;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .photoGrid .thumb .x{top:2px;right:2px}
+  .photoGrid .thumb .star{bottom:2px;left:2px;color:#ffd66b}
+  .photoGrid .add{width:64px;height:64px;border-radius:12px;border:1px dashed var(--violet);color:var(--lav);font-size:22px;background:none;cursor:pointer}
+  .card .gradient{position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,8,20,.94) 88%)}
+  .card .info{position:absolute;left:18px;right:18px;bottom:14px}
+  .card h2{font-size:25px;display:flex;align-items:center;gap:8px}
+  .card .age{font-weight:600}
+  .card .meta{color:#d9d3ff;font-size:13.5px;margin-top:4px}
+  .spectrumTag{display:inline-block;background:rgba(167,139,250,.25);border:1px solid rgba(167,139,250,.5);
+    color:var(--lav);padding:3px 10px;border-radius:99px;font-size:11.5px;margin-top:8px}
+  .card .bio{color:var(--muted);font-size:13px;margin-top:7px;line-height:1.45;max-height:55px;overflow:hidden}
+  .card .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+  .tag{background:rgba(255,255,255,.12);padding:4px 10px;border-radius:99px;font-size:12px}
+  .card .looking{margin-top:9px;font-size:11.5px;color:var(--muted)}
+  .stamp{position:absolute;top:26px;padding:6px 16px;border:3px solid;border-radius:10px;font-size:24px;
+    font-weight:800;letter-spacing:2px;opacity:0;transform:rotate(-14deg);transition:opacity .15s}
+  .stamp.like{left:18px;color:var(--green);border-color:var(--green)}
+  .stamp.nope{right:18px;color:#ff7a9c;border-color:#ff7a9c;transform:rotate(14deg)}
+  .distance{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.45);padding:5px 11px;border-radius:99px;font-size:12px}
+
+  #actions{display:flex;justify-content:center;gap:16px;padding:12px 0 4px}
+  .act{width:56px;height:56px;border-radius:50%;border:none;font-size:23px;cursor:pointer;color:#fff;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.4);transition:transform .12s}
+  .act:active{transform:scale(.88)}
+  .act.nope{background:#2a2540}.act.like{background:linear-gradient(135deg,var(--violet),var(--violet2))}
+  .act.rewind{background:#2a2540;font-size:19px}
+
+  .sectionTitle{margin:16px 16px 10px;font-size:13px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
+  #matchList{display:flex;gap:12px;overflow-x:auto;padding:4px 16px}
+  .matchBubble{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;flex:0 0 auto}
+  .matchBubble .av{width:62px;height:62px;border-radius:50%;padding:2.5px;background:linear-gradient(135deg,var(--violet),var(--violet2))}
+  .matchBubble .av .inner{width:100%;height:100%;border-radius:50%;overflow:hidden;background:var(--card2);
+    display:flex;align-items:center;justify-content:center;font-size:24px}
+  .matchBubble span{font-size:12px;color:var(--muted)}
+  .convRow{display:flex;gap:12px;align-items:center;padding:12px 16px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05)}
+  .convRow:hover{background:rgba(255,255,255,.03)}
+  .miniAv{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .convRow .txt{flex:1;min-width:0}
+  .convRow b{font-size:15px}
+  .convRow .last{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--green)}
+
+  /* ---------- Chat ---------- */
+  #chatView{padding:0;padding-bottom:0;overflow:hidden}
+  .chatHeader{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(26,25,41,.95);
+    border-bottom:1px solid rgba(255,255,255,.06)}
+  .chatHeader .back{background:none;border:none;color:var(--text);font-size:24px;cursor:pointer}
+  #chatMessages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:78%;padding:11px 15px;border-radius:18px;line-height:1.4;font-size:14.5px;animation:pop .2s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+  .msg.them{background:var(--card2);align-self:flex-start;border-bottom-left-radius:5px}
+  .msg.me{background:linear-gradient(135deg,var(--violet),var(--violet2));align-self:flex-end;border-bottom-right-radius:5px}
+  .msg .time{display:block;font-size:10px;opacity:.55;margin-top:4px}
+  #chatInputBar{display:flex;gap:10px;padding:12px 14px;background:rgba(26,25,41,.95);border-top:1px solid rgba(255,255,255,.06)}
+  #chatInputBar input{flex:1;background:var(--card2);border:none;border-radius:99px;padding:13px 18px;color:var(--text);outline:none;font-size:15px}
+  #chatInputBar button{width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;font-size:18px;
+    background:linear-gradient(135deg,var(--violet),var(--violet2));color:#fff}
+
+  /* ---------- Profil / édition ---------- */
+  .profileCard{background:var(--card);border-radius:var(--radius);padding:20px;margin:10px 14px}
+  .bigAv{width:84px;height:84px;border-radius:50%;margin:0 auto 10px;background:linear-gradient(135deg,var(--violet),var(--violet2));
+    display:flex;align-items:center;justify-content:center;font-size:38px;cursor:pointer;border:3px solid var(--card2)}
+  .statRow{display:flex;justify-content:space-around;margin:14px 0}
+  .stat{text-align:center}.stat b{font-size:19px;display:block}.stat span{font-size:11.5px;color:var(--muted)}
+  .checkRow{display:flex;flex-wrap:wrap;gap:7px}
+  .checkChip{padding:7px 13px;border-radius:99px;background:var(--card2);color:var(--muted);font-size:12.5px;cursor:pointer;border:1px solid transparent}
+  .checkChip.sel{background:rgba(167,139,250,.2);border-color:var(--violet);color:var(--lav)}
+  label.lbl{display:block;font-size:12px;color:var(--muted);margin:12px 0 6px}
+  .saveMsg{color:var(--green);font-size:13px;text-align:center;margin-top:10px;min-height:16px}
+
+  /* ---------- Navigation ---------- */
+  nav{position:absolute;bottom:0;left:0;right:0;display:flex;background:rgba(20,19,35,.94);
+    border-top:1px solid rgba(255,255,255,.07);padding:8px 0 12px;z-index:10}
+  nav button{flex:1;background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:3px}
+  nav button .ico{font-size:22px;filter:grayscale(1) opacity(.55);transition:.2s}
+  nav button.active{color:var(--violet)}
+  nav button.active .ico{filter:none;transform:translateY(-2px)}
+
+  /* ---------- Overlays ---------- */
+  #matchOverlay{position:absolute;inset:0;background:rgba(15,14,23,.97);z-index:60;display:none;
+    flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}
+  #matchOverlay.show{display:flex;animation:fadeIn .3s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  #matchOverlay .emoji{font-size:72px;animation:bounce .8s}
+  @keyframes bounce{0%{transform:scale(0)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+  #matchOverlay h1{font-size:31px;margin:14px 0 6px;background:linear-gradient(90deg,var(--lav),var(--violet2));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  #matchOverlay p{color:var(--muted);margin-bottom:26px;line-height:1.6}
+  #matchOverlay .btns{display:flex;flex-direction:column;gap:12px;width:100%;max-width:280px}
+
+  .empty{color:var(--muted);text-align:center;padding:50px 26px;font-size:14px;line-height:1.7}
+  .empty .big{font-size:48px;display:block;margin-bottom:12px}
+  #toast{position:absolute;top:16px;left:50%;transform:translateX(-50%);background:var(--card2);
+    padding:10px 18px;border-radius:99px;font-size:13.5px;z-index:70;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:90%}
+  /* Modération & signalement */
+  .chatBtns{margin-left:auto;display:flex;gap:6px}
+  .chatBtns button{width:36px;height:36px;border-radius:50%;border:none;background:var(--card2);cursor:pointer;font-size:15px}
+  #reportOverlay{position:absolute;inset:0;background:rgba(15,14,23,.97);z-index:60;display:none;flex-direction:column;justify-content:center;padding:26px}
+  #reportOverlay.show{display:flex}
+  #reportOverlay h2{margin-bottom:6px}
+  #reportOverlay p{color:var(--muted);font-size:13px;margin-bottom:14px}
+  .rChip{padding:10px 14px;border-radius:12px;background:var(--card2);color:var(--text);font-size:13.5px;cursor:pointer;border:1px solid transparent;margin-bottom:8px}
+  .rChip.sel{border-color:#ff7a9c;background:rgba(255,122,156,.12)}
+  .adminItem{background:var(--card);border-radius:14px;padding:14px;margin:0 14px 10px}
+  .adminItem .reason{color:#ff9ab3;font-size:13px;font-weight:600}
+  .adminItem .meta{color:var(--muted);font-size:12px;margin:4px 0 10px}
+  .adminBtns{display:flex;gap:6px;flex-wrap:wrap}
+  .adminBtns button{padding:8px 12px;border-radius:10px;border:none;cursor:pointer;font-size:12px;font-weight:600;color:#fff}
+  .abBan{background:#dc2626}.abPhotos{background:#d97706}.abDismiss{background:#374151}
+  ::-webkit-scrollbar{display:none}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ CONNEXION ============ -->
+  <div id="authView">
+    <div class="aceFlag"><div style="background:#000"></div><div style="background:#a3a3a3"></div><div style="background:#fff"></div><div style="background:#8a5cf6"></div></div>
+    <div class="logo">Étincelle</div>
+    <div class="tag">Rencontres &amp; amitiés pour personnes asexuelles<br>et peu sexuelles — connexion d'abord, sans pression.</div>
+    <div class="authTabs">
+      <button id="tabLogin" class="active" onclick="authTab('login')">Connexion</button>
+      <button id="tabRegister" onclick="authTab('register')">Créer un compte</button>
+    </div>
+
+    <div id="loginForm">
+      <input class="field" id="loginName" placeholder="Pseudo" autocomplete="username">
+      <input class="field" id="loginPass" type="password" placeholder="Mot de passe" autocomplete="current-password">
+      <button class="bigBtn btnPrimary" onclick="login()">Se connecter</button>
+    </div>
+
+    <div id="registerForm" style="display:none">
+      <input class="field" id="regName" placeholder="Pseudo">
+      <input class="field" id="regPass" type="password" placeholder="Mot de passe (6 caractères min)">
+      <div style="display:flex;gap:10px">
+        <input class="field" id="regAge" type="number" min="18" max="99" placeholder="Âge">
+        <input class="field" id="regLoc" placeholder="Ville">
+      </div>
+      <div style="display:flex;gap:10px">
+        <input class="field" id="regEmoji" maxlength="4" placeholder="Emoji 😊">
+        <input class="field" id="regJob" placeholder="Passion / métier">
+      </div>
+      <select class="field" id="regSpectrum">
+        <option value="asexuel·le">Asexuel·le</option><option value="gris-A">Gris-A / gray-asexuel</option>
+        <option value="démisexuel·le">Démisexuel·le</option><option value="ace-flux">Ace-flux</option>
+        <option value="asexuel·le aromantique">Asexuel·le aromantique</option>
+        <option value="questioning">En questionnement</option>
+      </select>
+      <div style="display:flex;gap:10px">
+        <button class="bigBtn btnPrimary" onclick="register()">Créer mon compte</button>
+      </div>
+    </div>
+    <div id="authError"></div>
+    <div class="demoHint">🧪 Comptes de démo : Léa, Thomas, Sofia, Maxime,<br>Camille, Nadia, Karim, Julie — mot de passe : <b>demo1234</b><br><span style="opacity:.7">(Ouvre 2 fenêtres pour tester le chat en temps réel !)</span></div>
+  </div>
+
+  <!-- ============ APP ============ -->
+  <div id="mainView" style="position:absolute;inset:0;display:none">
+
+    <!-- Découvrir -->
+    <div class="view active" id="swipeView">
+      <header><div class="logo">Étincelle 💜</div><div id="onlineDot" style="font-size:12px;color:var(--green)">● en ligne</div></header>
+      <div id="filterBar"></div>
+      <div id="filterPanel">
+        <div class="fRow">Âge : <input type="number" id="fAgeMin" min="18" max="99" value="18"> – <input type="number" id="fAgeMax" min="18" max="99" value="99"> ans</div>
+        <div class="fRow">Distance max : <input type="range" id="fDist" min="1" max="200" value="200" oninput="updateDistLbl()"><b id="fDistLbl" style="color:var(--lav)">illimitée</b></div>
+        <div class="fRow" style="margin-bottom:3px">Identité sur le spectre :</div>
+        <div class="checkRow" id="fSpectrum" style="margin-bottom:8px"></div>
+        <div class="fRow" style="gap:8px">
+          <button class="fBtn" onclick="locateMe()">📍 Me localiser</button>
+          <button class="fBtn" onclick="resetFilters()">Réinitialiser</button>
+        </div>
+        <div style="font-size:11.5px;color:var(--muted);opacity:.8" id="distHint"></div>
+      </div>
+      <div id="deckWrap"></div>
+      <div id="actions">
+        <button class="act rewind" onclick="rewind()" title="Annuler">↩️</button>
+        <button class="act nope" onclick="swipeBtn(false)" title="Passer">✖️</button>
+        <button class="act like" onclick="swipeBtn(true)" title="Connexion">💜</button>
+      </div>
+    </div>
+
+    <!-- Matchs -->
+    <div class="view" id="matchesView">
+      <header><div class="logo">Mes connexions</div><div style="font-size:12px;color:var(--muted)">temps réel</div></header>
+      <div class="sectionTitle">Nouvelles connexions</div>
+      <div id="matchList"></div>
+      <div class="sectionTitle">Conversations</div>
+      <div id="convList"></div>
+    </div>
+
+    <!-- Chat -->
+    <div class="view" id="chatView">
+      <div class="chatHeader">
+        <button class="back" onclick="show('matches')">‹</button>
+        <div class="miniAv" id="chatAv">🙂</div>
+        <div><b id="chatName">—</b><div style="font-size:12px;color:var(--green)" id="chatSub">● en ligne</div></div>
+        <div class="chatBtns">
+          <button onclick="openReport()" title="Signaler">🚩</button>
+          <button onclick="blockCurrent()" title="Bloquer">🚫</button>
+        </div>
+      </div>
+      <div id="chatMessages"></div>
+      <div id="chatInputBar">
+        <input id="chatInput" placeholder="Écris un message…" onkeydown="if(event.key==='Enter')sendMsg()">
+        <button onclick="sendMsg()">➤</button>
+      </div>
+    </div>
+
+    <!-- Profil -->
+    <div class="view" id="profileView">
+      <header><div class="logo">Mon profil</div><button class="btnGhost" style="padding:8px 14px;border-radius:10px;font-size:12.5px" onclick="logout()">Déconnexion</button></header>
+      <div class="profileCard" style="text-align:center">
+        <div class="bigAv" id="pAvWrap" onclick="pickPhoto()" title="Changer la photo" style="overflow:hidden"><span id="pEmoji">😊</span></div>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:8px">
+          <button class="fBtn" onclick="pickPhoto()">📷 Photo de profil</button>
+          <button class="fBtn" onclick="locateMe()">📍 Me localiser</button>
+        </div>
+        <input type="file" id="photoInput" accept="image/png,image/jpeg,image/webp" multiple style="display:none" onchange="uploadPhoto(this)">
+        <div class="photoGrid" id="photoGrid"></div>
+        <b id="pName">—</b>
+        <div style="color:var(--muted);font-size:13px;margin-top:2px" id="pSpectrum"></div>
+      </div>
+      <div class="profileCard">
+        <label class="lbl">Qui je suis sur le spectre</label>
+        <select class="field" id="eSpectrum">
+          <option value="asexuel·le">Asexuel·le</option><option value="gris-A">Gris-A / gray-asexuel</option>
+          <option value="démisexuel·le">Démisexuel·le</option><option value="ace-flux">Ace-flux</option>
+          <option value="asexuel·le aromantique">Asexuel·le aromantique</option>
+          <option value="questioning">En questionnement</option>
+        </select>
+        <label class="lbl">Ce que je recherche</label>
+        <div class="checkRow" id="eLooking"></div>
+        <label class="lbl">Bio</label>
+        <textarea class="field" id="eBio" rows="3" placeholder="Ce qui te rend unique…"></textarea>
+        <label class="lbl">Centres d'intérêt (séparés par des virgules)</label>
+        <input class="field" id="eTags" placeholder="🎵 Musique, 🥾 Rando, 📚 Lecture">
+        <label class="lbl">Ville &amp; métier</label>
+        <div style="display:flex;gap:10px">
+          <input class="field" id="eLoc" placeholder="Ville">
+          <input class="field" id="eJob" placeholder="Métier">
+        </div>
+        <button class="bigBtn btnPrimary" style="margin-top:8px" onclick="saveProfile()">Enregistrer</button>
+        <div class="saveMsg" id="saveMsg"></div>
+      </div>
+      <div class="profileCard">
+        <label class="lbl">🚫 Personnes bloquées</label>
+        <div id="blockedList" style="font-size:13px;color:var(--muted)">Aucune</div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav>
+      <button class="active" data-v="swipe" onclick="show('swipe')"><span class="ico">✨</span>Découvrir</button>
+      <button data-v="matches" onclick="show('matches')"><span class="ico">💬</span>Connexions</button>
+      <button data-v="profile" onclick="show('profile')"><span class="ico">👤</span>Profil</button>
+      <button data-v="admin" id="navAdmin" onclick="show('admin')" style="display:none"><span class="ico">🛡️</span>Modo</button>
+    </nav>
+
+    <!-- Overlay signalement -->
+    <div id="reportOverlay">
+      <h2>🚩 Signaler</h2>
+      <p>Tu peux signaler un comportement inapproprié. Notre équipe de modération examine chaque signalement.</p>
+      <div id="reportReasons"></div>
+      <textarea class="field" id="reportDetails" rows="3" placeholder="Détails (optionnel)…"></textarea>
+      <button class="bigBtn btnPrimary" onclick="sendReport()">Envoyer le signalement</button>
+      <div class="linkLike" onclick="closeReport()">Annuler</div>
+    </div>
+
+    <!-- Vue modération -->
+    <div class="view" id="adminView">
+      <header><div class="logo">🛡️ Modération</div><div style="font-size:12px;color:var(--muted)" id="adminCount"></div></header>
+      <div class="sectionTitle">Signalements</div>
+      <div id="adminReports"></div>
+      <div class="sectionTitle">Comptes</div>
+      <div id="adminUsers"></div>
+    </div>
+
+    <!-- Overlay match -->
+    <div id="matchOverlay">
+      <div class="emoji">💜</div>
+      <h1>C'est une connexion !</h1>
+      <p id="matchText"></p>
+      <div class="btns">
+        <button class="bigBtn btnPrimary" onclick="goChatFromMatch()">💬 Envoyer un message</button>
+        <button class="bigBtn btnGhost" onclick="hideMatch()">Continuer à découvrir</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+</div>
+
+<script>
+/* ================= ÉTAT ================= */
+const API = '';
+let token = localStorage.getItem('etincelle_token') || '';
+let me = null, profiles = [], matches = [], currentMatchId = null, currentFilter = 'tout';
+let lastSwiped = null, es = null;
+const $ = s => document.querySelector(s);
+const LOOKING_OPTS = ['amitiés','relation romantique sans sexe','relation queerplatonique','discussions & complicité'];
+const EMOJIS = ['😊','🙂','🌟','🌙','💜','🦊','🐱','🐼','🦉','🌸','🍄','⚡','🎨','🚀','🎧','📚'];
+
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.style.display = 'block';
+  clearTimeout(t._h); t._h = setTimeout(()=>t.style.display='none', 2600);
+}
+function avStyle(p){ return 'background:linear-gradient(135deg,#8a5cf6,#5c8aff)'; }
+function avatarHtml(p, cls){
+  const ph = p.photos && p.photos[0];
+  return ph
+    ? `<div class="${cls}" style="${avStyle(p)};overflow:hidden"><img src="${ph}" alt=""></div>`
+    : `<div class="${cls}" style="${avStyle(p)}">${p.emoji}</div>`;
+}
+
+/* ================= DISTANCE & LOCALISATION ================= */
+function distKm(p){
+  if(typeof me?.lat!=='number'||typeof me?.lon!=='number'||typeof p.lat!=='number'||typeof p.lon!=='number') return null;
+  const R=6371, dLat=(p.lat-me.lat)*Math.PI/180, dLon=(p.lon-me.lon)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(me.lat*Math.PI/180)*Math.cos(p.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
+}
+function locateMe(){
+  if(!navigator.geolocation){ toast('Géolocalisation indisponible'); return; }
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    try{
+      const d=await api('/api/profile',{method:'POST',body:{lat:pos.coords.latitude,lon:pos.coords.longitude}});
+      me=d.user; toast('📍 Position enregistrée — filtres de distance actifs !');
+      fillProfileView(); loadProfiles().then(renderDeck);
+    }catch(e){ toast(e.message); }
+  }, ()=>toast('Position refusée — la distance utilisera ta ville'), {timeout:8000});
+}
+
+/* ================= API ================= */
+async function api(path, opts={}){
+  const r = await fetch(API + path, {
+    method: opts.method || 'GET',
+    headers: { 'Content-Type':'application/json', ...(token ? {'Authorization':'Bearer '+token} : {}) },
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  const data = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error || 'Erreur');
+  return data;
+}
+
+/* ================= AUTH ================= */
+function authTab(t){
+  $('#tabLogin').classList.toggle('active', t==='login');
+  $('#tabRegister').classList.toggle('active', t==='register');
+  $('#loginForm').style.display = t==='login' ? '' : 'none';
+  $('#registerForm').style.display = t==='register' ? '' : 'none';
+  $('#authError').textContent = '';
+}
+
+async function login(){
+  try{
+    const d = await api('/api/login', {method:'POST', body:{name:$('#loginName').value, password:$('#loginPass').value}});
+    token = d.token; localStorage.setItem('etincelle_token', token);
+    enterApp(d.user);
+  }catch(e){ $('#authError').textContent = e.message; }
+}
+
+async function register(){
+  try{
+    const profile = {
+      age: parseInt($('#regAge').value) || 25,
+      location: $('#regLoc').value || 'Belgique',
+      emoji: $('#regEmoji').value || '😊',
+      job: $('#regJob').value || '',
+      spectrum: $('#regSpectrum').value,
+      lookingFor: ['amitiés'],
+      bio: ''
+    };
+    const d = await api('/api/register', {method:'POST', body:{name:$('#regName').value, password:$('#regPass').value, profile}});
+    token = d.token; localStorage.setItem('etincelle_token', token);
+    enterApp(d.user);
+  }catch(e){ $('#authError').textContent = e.message; }
+}
+
+function logout(){
+  localStorage.removeItem('etincelle_token');
+  location.reload();
+}
+
+/* ================= APP ================= */
+async function enterApp(user){
+  me = user;
+  $('#authView').style.display = 'none';
+  $('#mainView').style.display = 'block';
+  if(me.admin) $('#navAdmin').style.display = '';
+  fillProfileView();
+  await Promise.all([loadProfiles(), loadMatches()]);
+  connectSSE();
+  renderDeck();
+}
+
+function fillProfileView(){
+  loadBlockedList();
+  $('#pName').textContent = me.name;
+  renderMyAvatar();
+  renderSpectrumFilters();
+  $('#pSpectrum').textContent = me.spectrum + (me.location ? ' · ' + me.location : '');
+  $('#distHint').textContent = (typeof me.lat==='number')
+    ? '✓ Position enregistrée (' + (me.location||'GPS') + ')' : 'ℹ️ Clique sur « Me localiser » pour activer le filtre de distance';
+  $('#eSpectrum').value = me.spectrum || 'asexuel·le';
+  $('#eBio').value = me.bio || '';
+  $('#eTags').value = (me.tags||[]).join(', ');
+  $('#eLoc').value = me.location || '';
+  $('#eJob').value = me.job || '';
+  const lr = $('#eLooking'); lr.innerHTML = '';
+  LOOKING_OPTS.forEach(o => {
+    const c = document.createElement('div');
+    c.className = 'checkChip' + ((me.lookingFor||[]).includes(o) ? ' sel' : '');
+    c.textContent = o;
+    c.onclick = () => c.classList.toggle('sel');
+    lr.appendChild(c);
+  });
+}
+function pickPhoto(){ $('#photoInput').click(); }
+
+/* Recadrage automatique au carré + compression (canvas, sans dépendance) */
+function cropSquare(file, size=900){
+  return new Promise((res, rej) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const c = document.createElement('canvas'); c.width = c.height = size;
+      const ctx = c.getContext('2d');
+      const s = Math.min(img.width, img.height);
+      ctx.drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('Image illisible')); };
+    img.src = url;
+  });
+}
+async function uploadPhoto(input){
+  const files = [...(input.files || [])];
+  input.value = '';
+  if(!files.length) return;
+  const slots = 6 - (me.photos || []).length;
+  if(slots <= 0){ toast("6 photos maximum — supprime-en d'abord"); return; }
+  let ok = 0;
+  for(const f of files.slice(0, slots)){
+    try{
+      const data = await cropSquare(f);
+      const d = await api('/api/photo', {method:'POST', body:{data}});
+      me = d.user; ok++;
+    }catch(e){ toast(e.message); break; }
+  }
+  if(ok){ renderMyAvatar(); toast('📷 ' + ok + ' photo(s) enregistrée(s) !'); loadProfiles().then(renderDeck); }
+}
+async function photoDelete(i){
+  try{ const d = await api('/api/photoDelete', {method:'POST', body:{index:i}}); me = d.user; renderMyAvatar(); loadProfiles().then(renderDeck); }
+  catch(e){ toast(e.message); }
+}
+async function photoMain(i){
+  try{ const d = await api('/api/photoMain', {method:'POST', body:{index:i}}); me = d.user; renderMyAvatar(); loadProfiles().then(renderDeck); }
+  catch(e){ toast(e.message); }
+}
+function renderMyAvatar(){
+  $('#pAvWrap').innerHTML = (me.photos && me.photos[0])
+    ? `<img src="${me.photos[0]}" alt="ma photo">`
+    : `<span>${me.emoji}</span>`;
+  renderPhotoGrid();
+}
+function renderPhotoGrid(){
+  const g = $('#photoGrid'); if(!g) return;
+  g.innerHTML = '';
+  (me.photos || []).forEach((ph, i) => {
+    const t = document.createElement('div');
+    t.className = 'thumb';
+    t.innerHTML = `<img src="${ph}" alt=""><div class="x" title="Supprimer">✕</div>${i > 0 ? '<div class="star" title="Définir comme photo principale">★</div>' : ''}`;
+    t.querySelector('.x').onclick = ev => { ev.stopPropagation(); photoDelete(i); };
+    const st = t.querySelector('.star');
+    if(st) st.onclick = ev => { ev.stopPropagation(); photoMain(i); };
+    g.appendChild(t);
+  });
+  if((me.photos || []).length < 6){
+    const add = document.createElement('button');
+    add.className = 'add'; add.textContent = '+'; add.title = 'Ajouter une photo';
+    add.onclick = pickPhoto;
+    g.appendChild(add);
+  }
+}
+async function saveProfile(){
+  const lookingFor = [...document.querySelectorAll('#eLooking .checkChip.sel')].map(c=>c.textContent);
+  const user = await api('/api/profile', {method:'POST', body:{
+    emoji: me.emoji, spectrum: $('#eSpectrum').value, lookingFor,
+    bio: $('#eBio').value, tags: $('#eTags').value.split(',').map(s=>s.trim()).filter(Boolean),
+    location: $('#eLoc').value, job: $('#eJob').value
+  }});
+  me = user.user; fillProfileView();
+  $('#saveMsg').textContent = '✓ Profil enregistré !';
+  setTimeout(()=>$('#saveMsg').textContent='', 2500);
+  loadProfiles().then(renderDeck);
+}
+
+/* ================= SSE temps réel ================= */
+function connectSSE(){
+  if(es) es.close();
+  es = new EventSource('/api/events?token=' + encodeURIComponent(token));
+  es.addEventListener('message', e => {
+    const {matchId, message} = JSON.parse(e.data);
+    const m = matches.find(x => x.id === matchId);
+    if(m){
+      if(!m.messages.some(x => x.time === message.time && x.from === message.from && x.text === message.text))
+        m.messages.push(message);
+      if(currentMatchId === matchId) renderChat();
+      renderMatches();
+    }
+  });
+  es.addEventListener('match', e => {
+    const {match, user} = JSON.parse(e.data);
+    if(!matches.some(x => x.id === match.id)){ matches.unshift(match); }
+    $('#matchText').innerHTML = `Toi et <b>${user.name}</b> cherchez une vraie connexion 💜`;
+    window._lastMatch = match;
+    $('#matchOverlay').classList.add('show');
+    renderMatches();
+  });
+  es.addEventListener('profiles', () => { loadProfiles().then(renderDeck); });
+  es.addEventListener('report', () => {
+    if(me && me.admin){ toast('🚩 Nouveau signalement — onglet Modo'); if($('#adminView').classList.contains('active')) showAdmin(); }
+  });
+}
+
+/* ================= DÉCOUVERTE ================= */
+const FILTERS = ['tout', 'amitiés', 'romantique sans sexe', 'queerplatonique', 'discussions'];
+const SPECTRA = [['asexuel·le','asexuel'],['gris-A','gris'],['démisexuel·le','démis'],['ace-flux','ace-flux'],['aromantique','aromantique'],['questioning','questioning']];
+function renderSpectrumFilters(){
+  const w = $('#fSpectrum'); if(!w) return;
+  w.innerHTML = '';
+  SPECTRA.forEach(([label, k]) => {
+    const c = document.createElement('div');
+    c.className = 'checkChip'; c.textContent = label; c.dataset.k = k;
+    c.onclick = () => { c.classList.toggle('sel'); renderDeck(); };
+    w.appendChild(c);
+  });
+}
+function matchesFilter(p){
+  if(currentFilter !== 'tout'){
+    if(currentFilter === 'romantique sans sexe') { if(!(p.lookingFor||[]).some(l => l.includes('romantique'))) return false; }
+    else if(currentFilter === 'queerplatonique') { if(!(p.lookingFor||[]).some(l => l.includes('queerplat') || l.includes('complicité'))) return false; }
+    else if(!(p.lookingFor||[]).some(l => l.includes(currentFilter))) return false;
+  }
+  const selS = [...document.querySelectorAll('#fSpectrum .checkChip.sel')].map(c => c.dataset.k);
+  if(selS.length && !selS.some(k => (p.spectrum||'').toLowerCase().includes(k))) return false;
+  const aMin = parseInt($('#fAgeMin')?.value) || 18;
+  const aMax = parseInt($('#fAgeMax')?.value) || 99;
+  if(p.age < aMin || p.age > aMax) return false;
+  const dMax = parseInt($('#fDist')?.value) || 200;
+  const d = distKm(p);
+  if(dMax < 200 && d !== null && d > dMax) return false;
+  return true;
+}
+function updateDistLbl(){
+  const v = parseInt($('#fDist').value);
+  $('#fDistLbl').textContent = v >= 200 ? 'illimitée' : v + ' km';
+}
+function resetFilters(){
+  currentFilter = 'tout';
+  $('#fAgeMin').value = 18; $('#fAgeMax').value = 99;
+  $('#fDist').value = 200; updateDistLbl();
+  document.querySelectorAll('#fSpectrum .checkChip.sel').forEach(c => c.classList.remove('sel'));
+  renderFilterBar(); renderDeck();
+}
+
+async function loadProfiles(){
+  try{
+    const d = await api('/api/profiles');
+    profiles = d.profiles;
+  }catch(e){ if(e.message.includes('connecté')) logout(); }
+}
+
+function renderFilterBar(){
+  const bar = $('#filterBar'); bar.innerHTML = '';
+  FILTERS.forEach(f => {
+    const c = document.createElement('button');
+    c.className = 'chip' + (f===currentFilter ? ' active' : '');
+    c.textContent = f;
+    c.onclick = () => { currentFilter = f; renderFilterBar(); renderDeck(); };
+    bar.appendChild(c);
+  });
+  const gear = document.createElement('button');
+  gear.className = 'chip';
+  gear.textContent = '⚙️ Filtres';
+  gear.onclick = () => $('#filterPanel').classList.toggle('open');
+  bar.appendChild(gear);
+}
+
+function filtered(){ return profiles.filter(matchesFilter); }
+
+function renderDeck(){
+  const wrap = $('#deckWrap'); wrap.innerHTML = '';
+  const deck = filtered().slice(0,3).reverse();
+  deck.forEach((p, z) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.zIndex = z;
+    card.style.transform = `scale(${1 - z*0.04}) translateY(${z*10}px)`;
+    card.innerHTML = `
+      <div class="photo" style="${avStyle(p)}">${(p.photos && p.photos[0]) ? `<img src="${p.photos[0]}" data-i="0" alt="">` : p.emoji}</div>
+      ${(p.photos||[]).length > 1 ? `<div class="dots">${p.photos.map((_,i)=>`<div class="${i===0?'on':''}"></div>`).join('')}</div>` : ''}
+      <div class="gradient"></div>
+      <div class="distance">📍 ${distKm(p) !== null ? 'à ' + distKm(p) + ' km' : p.location}</div>
+      <div class="stamp like">CONNEXION</div><div class="stamp nope">PASSER</div>
+      <div class="info">
+        <h2>${p.name} <span class="age">${p.age}</span></h2>
+        <div class="meta">${p.job || ''}</div>
+        <span class="spectrumTag">💜 ${p.spectrum}</span>
+        <div class="bio">${p.bio}</div>
+        <div class="tags">${(p.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        <div class="looking">🔍 Recherche : ${(p.lookingFor||[]).join(' · ')}</div>
+      </div>`;
+    if(z === 0) attachDrag(card, p);
+    wrap.appendChild(card);
+  });
+  if(!deck.length){
+    wrap.innerHTML = `<div class="empty"><span class="big">🌌</span>Aucun nouveau profil dans ta zone…<br>La communauté grandit chaque jour — reviens bientôt ! 💜</div>`;
+  }
+}
+
+function cyclePhoto(card, p){
+  const photos = p.photos || [];
+  if(photos.length < 2) return;
+  const img = card.querySelector('.photo img');
+  if(!img) return;
+  let i = (parseInt(img.dataset.i) || 0) + 1;
+  if(i >= photos.length) i = 0;
+  img.src = photos[i]; img.dataset.i = i;
+  card.querySelectorAll('.dots div').forEach((d, j) => d.classList.toggle('on', j === i));
+}
+function attachDrag(card, profile){
+  let startX=0, startY=0, dx=0, dragging=false, moved=false;
+  const like = card.querySelector('.stamp.like'), nope = card.querySelector('.stamp.nope');
+  const down = e => { dragging=true; const ev=(e.touches?e.touches[0]:e); startX=ev.clientX; startY=ev.clientY; card.style.transition='none'; };
+  const move = e => {
+    if(!dragging) return;
+    const ev = e.touches ? e.touches[0] : e;
+    dx = ev.clientX - startX;
+    if(Math.abs(dx) > 6) moved = true;
+    const dy = (ev.clientY - startY)*0.4;
+    card.style.transform = `translate(${dx}px,${dy}px) rotate(${dx/18}deg)`;
+    like.style.opacity = dx > 60 ? 1 : 0;
+    nope.style.opacity = dx < -60 ? 1 : 0;
+    if(e.cancelable) e.preventDefault();
+  };
+  const up = () => {
+    if(!dragging) return; dragging=false;
+    if(!moved) cyclePhoto(card, profile);
+    else if(dx > 110) commit(profile, card, true);
+    else if(dx < -110) commit(profile, card, false);
+    else { card.style.transition='transform .3s'; card.style.transform='scale(1)'; like.style.opacity=0; nope.style.opacity=0; }
+    dx=0; moved=false;
+  };
+  card.addEventListener('mousedown',down); card.addEventListener('touchstart',down,{passive:true});
+  window.addEventListener('mousemove',move); window.addEventListener('touchmove',move,{passive:false});
+  window.addEventListener('mouseup',up); window.addEventListener('touchend',up);
+}
+
+async function commit(profile, card, liked){
+  lastSwiped = {profile, liked};
+  profiles = profiles.filter(p => p.id !== profile.id);
+  card.style.transition = 'transform .4s, opacity .4s';
+  card.style.transform = `translate(${liked?420:-420}px,-60px) rotate(${liked?28:-28}deg)`;
+  card.style.opacity = 0;
+  renderDeck();
+  try{
+    const d = await api('/api/swipe', {method:'POST', body:{targetId:profile.id, liked}});
+    if(d.matched && d.matchId){
+      await loadMatches();
+      const m = matches.find(x=>x.id===d.matchId);
+      $('#matchText').innerHTML = `Toi et <b>${profile.name}</b> cherchez une vraie connexion 💜`;
+      window._lastMatch = m;
+      $('#matchOverlay').classList.add('show');
+      renderMatches();
+    }
+  }catch(e){ toast(e.message); }
+}
+
+function swipeBtn(liked){
+  const top = document.querySelector('#deckWrap .card');
+  const p = filtered()[0];
+  if(!top || !p) return;
+  top.style.transition = 'transform .35s, opacity .35s';
+  top.style.transform = `translate(${liked?420:-420}px,-60px) rotate(${liked?28:-28}deg)`;
+  top.style.opacity = 0;
+  commit(p, top, liked);
+}
+
+function rewind(){
+  if(!lastSwiped) { toast('Rien à annuler'); return; }
+  profiles.unshift(lastSwiped.profile);
+  lastSwiped = null;
+  renderDeck();
+}
+
+/* ================= MATCHS ================= */
+async function loadMatches(){
+  try{ matches = (await api('/api/matches')).matches; renderMatches(); }
+  catch(e){}
+}
+
+function renderMatches(){
+  const list = $('#matchList'); list.innerHTML = '';
+  if(!matches.length)
+    list.innerHTML = `<div class="empty" style="width:100%;padding:20px"><span class="big">💜</span>Aucune connexion pour l'instant.<br>Continue à découvrir !</div>`;
+  matches.forEach(m => {
+    if(!m.other) return;
+    const b = document.createElement('div');
+    b.className = 'matchBubble';
+    b.innerHTML = `<div class="av"><div class="inner" style="${avStyle(m.other)};overflow:hidden">${(m.other.photos && m.other.photos[0]) ? `<img src="${m.other.photos[0]}" alt="" style="width:100%;height:100%;object-fit:cover">` : m.other.emoji}</div></div><span>${m.other.name}</span>`;
+    b.onclick = () => openChat(m.id);
+    list.appendChild(b);
+  });
+  const conv = $('#convList'); conv.innerHTML = '';
+  matches.forEach(m => {
+    if(!m.other) return;
+    const last = m.messages.length ? m.messages[m.messages.length-1] : null;
+    const row = document.createElement('div');
+    row.className = 'convRow';
+    row.innerHTML = `${avatarHtml(m.other, 'miniAv')}
+      <div class="txt"><b>${m.other.name}</b><div class="last">${last ? (last.from===me.id?'Toi : ':'')+last.text : 'Dites bonjour 👋'}</div></div>
+      ${last ? '<div class="dot"></div>' : '<div style="color:var(--violet)">✨</div>'}`;
+    row.onclick = () => openChat(m.id);
+    conv.appendChild(row);
+  });
+}
+
+/* ================= CHAT ================= */
+function openChat(matchId){
+  currentMatchId = matchId;
+  const m = matches.find(x => x.id === matchId);
+  if(!m) return;
+  $('#chatName').textContent = m.other.name + ', ' + m.other.age;
+  $('#chatAv').outerHTML = avatarHtml(m.other, 'miniAv').replace('<div class="miniAv"', '<div class="miniAv" id="chatAv"');
+  $('#chatSub').textContent = m.other.spectrum + ' · ' + (m.other.location||'');
+  renderChat();
+  show('chat');
+}
+
+function fmtTime(iso){ return new Date(iso).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+
+function renderChat(){
+  const m = matches.find(x => x.id === currentMatchId);
+  if(!m) return;
+  const box = $('#chatMessages'); box.innerHTML = '';
+  if(!m.messages.length){
+    box.innerHTML = `<div class="empty"><span class="big">👋</span>Début de votre connexion avec <b>${m.other.name}</b>.<br>Pas de pression — juste des mots sincères. 💜</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;padding:0 4px">
+      ${(m.other.icebreakers||[]).map(o=>`<button class="bigBtn btnGhost" style="font-size:13px;font-weight:500;padding:12px;text-align:left" onclick="sendOpener(this.dataset.o)" data-o="${o.replace(/"/g,'&quot;')}">${o}</button>`).join('')}
+      </div>`;
+    return;
+  }
+  m.messages.forEach(msg => {
+    const d = document.createElement('div');
+    d.className = 'msg ' + (msg.from === me.id ? 'me' : 'them');
+    d.textContent = msg.text;
+    const t = document.createElement('span'); t.className = 'time'; t.textContent = fmtTime(msg.time);
+    d.appendChild(t);
+    box.appendChild(d);
+  });
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendOpener(text){ sendText(text); }
+function sendMsg(){ const i = $('#chatInput'); if(i.value.trim()) { sendText(i.value.trim()); i.value=''; } }
+async function sendText(text){
+  try{
+    await api('/api/send', {method:'POST', body:{matchId: currentMatchId, text}});
+    const m = matches.find(x => x.id === currentMatchId);
+    m.messages.push({from: me.id, text, time: new Date().toISOString()});
+    renderChat(); renderMatches();
+  }catch(e){ toast(e.message); }
+}
+
+function goChatFromMatch(){ hideMatch(); if(window._lastMatch) openChat(window._lastMatch.id); }
+function hideMatch(){ $('#matchOverlay').classList.remove('show'); }
+
+/* ================= SIGNALEMENT & BLOCAGE ================= */
+const REPORT_REASONS = ['Comportement inapproprié','Contenu offensant','Faux profil / usurpation','Harcèlement','Autre'];
+let reportTargetId = null;
+function openReport(){
+  const m = matches.find(x => x.id === currentMatchId);
+  if(!m){ toast("Ouvre d'abord une conversation"); return; }
+  reportTargetId = m.other.id;
+  const w = $('#reportReasons'); w.innerHTML = '';
+  REPORT_REASONS.forEach((r, i) => {
+    const c = document.createElement('div');
+    c.className = 'rChip' + (i === 0 ? ' sel' : ''); c.textContent = r;
+    c.onclick = () => { document.querySelectorAll('.rChip').forEach(x => x.classList.remove('sel')); c.classList.add('sel'); };
+    w.appendChild(c);
+  });
+  $('#reportDetails').value = '';
+  $('#reportOverlay').classList.add('show');
+}
+function closeReport(){ $('#reportOverlay').classList.remove('show'); }
+async function sendReport(){
+  const reason = document.querySelector('.rChip.sel')?.textContent || 'Autre';
+  try{
+    await api('/api/report', {method:'POST', body:{targetId: reportTargetId, reason, details: $('#reportDetails').value}});
+    toast('🚩 Signalement envoyé. Merci !'); closeReport();
+  }catch(e){ toast(e.message); }
+}
+async function blockCurrent(){
+  const m = matches.find(x => x.id === currentMatchId);
+  if(!m) return;
+  if(!confirm('Bloquer ' + m.other.name + ' ? Vous ne vous verrez plus et la conversation sera supprimée.')) return;
+  try{
+    await api('/api/block', {method:'POST', body:{targetId: m.other.id}});
+    toast('🚫 ' + m.other.name + ' est bloqué·e');
+    currentMatchId = null;
+    await loadMatches(); show('matches');
+  }catch(e){ toast(e.message); }
+}
+async function loadBlockedList(){
+  try{
+    const d = await api('/api/blocked');
+    const w = $('#blockedList'); w.innerHTML = '';
+    if(!d.blocked.length){ w.textContent = 'Aucune'; return; }
+    d.blocked.forEach(u => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)';
+      row.innerHTML = `<span>${u.emoji} ${u.name}</span>`;
+      const b = document.createElement('button'); b.className = 'fBtn'; b.textContent = 'Débloquer';
+      b.onclick = async () => {
+        await api('/api/unblock', {method:'POST', body:{targetId: u.id}});
+        loadBlockedList(); loadProfiles().then(renderDeck);
+      };
+      row.appendChild(b); w.appendChild(row);
+    });
+  }catch(e){}
+}
+
+/* ================= MODÉRATION ================= */
+async function showAdmin(){
+  if(!me || !me.admin) return;
+  try{
+    const [r, u] = await Promise.all([api('/api/admin/reports'), api('/api/admin/users')]);
+    const open = r.reports.filter(x => x.status === 'open');
+    $('#adminCount').textContent = open.length + ' signalement(s) ouvert(s)';
+    const w = $('#adminReports'); w.innerHTML = '';
+    if(!r.reports.length) w.innerHTML = '<div class="empty" style="padding:18px">Aucun signalement 🎉</div>';
+    r.reports.forEach(rep => {
+      const el = document.createElement('div'); el.className = 'adminItem';
+      el.innerHTML = `<div class="reason">🚩 ${rep.reason}</div>
+        <div class="meta"><b>${rep.byName}</b> a signalé <b>${rep.againstName}</b> · ${new Date(rep.time).toLocaleString('fr-FR')} · ${rep.status === 'open' ? '🟠 ouvert' : '✅ traité (' + rep.action + ')'}
+        ${rep.details ? '<div style="margin-top:4px">« ' + rep.details + ' »</div>' : ''}</div>`;
+      if(rep.status === 'open'){
+        const btns = document.createElement('div'); btns.className = 'adminBtns';
+        const mk = (cls, txt, fn) => { const b = document.createElement('button'); b.className = cls; b.textContent = txt; b.onclick = fn; return b; };
+        btns.appendChild(mk('abBan', '🚫 Bannir', () => adminAction(rep.id, 'ban')));
+        btns.appendChild(mk('abPhotos', '🖼️ Effacer photos', () => adminAction(rep.id, 'clearPhotos')));
+        btns.appendChild(mk('abDismiss', '✓ Classer', () => adminAction(rep.id, 'dismiss')));
+        el.appendChild(btns);
+      }
+      w.appendChild(el);
+    });
+    const uw = $('#adminUsers'); uw.innerHTML = '';
+    u.users.filter(x => !x.admin).forEach(us => {
+      const el = document.createElement('div'); el.className = 'adminItem';
+      el.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 14px';
+      el.innerHTML = `<div><b>${us.emoji} ${us.name}</b> ${us.banned ? '<span class="bannedTag" style="color:#ff7a9c;font-size:11px">· BANNI</span>' : ''}<div style="font-size:11.5px;color:var(--muted)">${us.spectrum || '?'} · ${us.location || ''}</div></div>`;
+      const b = document.createElement('button'); b.className = 'fBtn';
+      b.textContent = us.banned ? 'Débannir' : 'Bannir';
+      b.onclick = async () => {
+        if(!confirm((us.banned ? 'Débannir ' : 'Bannir ') + us.name + ' ?')) return;
+        await api('/api/admin/ban', {method:'POST', body:{userId: us.id, banned: !us.banned}});
+        showAdmin();
+      };
+      el.appendChild(b); uw.appendChild(el);
+    });
+  }catch(e){ toast(e.message); }
+}
+async function adminAction(id, action){
+  try{ await api('/api/admin/action', {method:'POST', body:{reportId: id, action}}); showAdmin(); }
+  catch(e){ toast(e.message); }
+}
+
+/* ================= NAV ================= */
+function show(v){
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.getElementById(v + 'View').classList.add('active');
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+  if(v === 'matches') loadMatches();
+  if(v === 'swipe') { loadProfiles().then(renderDeck); }
+  if(v === 'profile') loadBlockedList();
+  if(v === 'admin') showAdmin();
+}
+
+/* ================= INIT ================= */
+renderFilterBar();
+renderSpectrumFilters();
+(async () => {
+  if(!token) return;
+  try{
+    const d = await api('/api/me');
+    enterApp(d.user);
+  }catch{ localStorage.removeItem('etincelle_token'); token=''; }
+})();
+document.addEventListener('keydown', e => { if(e.key==='Enter' && $('#loginPass')===document.activeElement) login(); });
+</script>
+</body>
+</html>
